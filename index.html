@@ -277,7 +277,8 @@ var PROGS = sget('gym.prog2', null);// saved custom program or null
 /* ================= i18n ================= */
 var T = {
   en:{ today:'Today', program:'Program', diary:'Diary', stats:'Stats', diet:'Diet',
-    warmup:'Warm-up', warmdesc:'15 minutes walking on treadmill', start15:'Start 15:00', donemark:'Done ✓',
+    warmup:'Warm-up', warmdesc:'5–10 min of any cardio: bike, rowing, elliptical, stairs or jump rope', start15:'Start 10:00', donemark:'Done ✓',
+    warmtip:'Then 2–3 light ramp-up sets of your first exercise (empty bar → 50% → 70% of working weight)',
     sets:'sets', reps:'reps', kg:'kg', prev:'‹ Prev', next:'Next ›', todayBtn:'Today',
     setsdone:'sets done', resthint:'Rest 60–120 s between sets — tap a set to log it with the weight and reps entered.',
     weeklysplit:'Weekly split', exercises:'exercises', edit:'Edit', openday:'Open workout',
@@ -292,7 +293,7 @@ var T = {
     goalg:'Goal', lose:'Lose fat', maintain:'Maintain', gain:'Gain muscle', save:'Save',
     searchfood:'Search food…', grams:'g', eaten:'eaten', left:'left', over:'over',
     muscles:'Muscles', technique:'Technique', tapclose:'Tap outside the card to close',
-    rest:'Rest', warmlbl:'Warm-up · treadmill', timeup:'Time!', pause:'Pause', resume:'Resume',
+    rest:'Rest', warmlbl:'Warm-up · cardio', timeup:'Time!', pause:'Pause', resume:'Resume',
     pr:'PR!', nofood:'Nothing found — check spelling or add weight in grams to any product above.',
     steps:'steps',
     plan:'Training plan', plan7:'7-day split', planeod:'Every other day',
@@ -301,7 +302,8 @@ var T = {
     restday:'Rest day', restdesc:'Recovery day — your muscles grow while you rest. Next workout is tomorrow.',
     trainanyway:'Train today instead', workout:'Workout' },
   ru:{ today:'Сегодня', program:'Программа', diary:'Дневник', stats:'Статистика', diet:'Питание',
-    warmup:'Разминка', warmdesc:'15 минут ходьбы на дорожке', start15:'Старт 15:00', donemark:'Готово ✓',
+    warmup:'Разминка', warmdesc:'5–10 мин любого кардио: велотренажёр, гребля, эллипс, лестница или скакалка', start15:'Старт 10:00', donemark:'Готово ✓',
+    warmtip:'Затем 2–3 лёгких разминочных подхода первого упражнения (пустой гриф → 50% → 70% рабочего веса)',
     sets:'подх.', reps:'повт.', kg:'кг', prev:'‹ Назад', next:'Вперёд ›', todayBtn:'Сегодня',
     setsdone:'подходов сделано', resthint:'Отдых 60–120 с между подходами — нажмите на подход, чтобы записать его с указанным весом и повторами.',
     weeklysplit:'Недельный сплит', exercises:'упражн.', edit:'Изменить', openday:'Открыть тренировку',
@@ -316,7 +318,7 @@ var T = {
     goalg:'Цель', lose:'Похудение', maintain:'Поддержание', gain:'Набор массы', save:'Сохранить',
     searchfood:'Поиск продукта…', grams:'г', eaten:'съедено', left:'осталось', over:'сверх нормы',
     muscles:'Мышцы', technique:'Техника', tapclose:'Нажмите вне карточки, чтобы закрыть',
-    rest:'Отдых', warmlbl:'Разминка · дорожка', timeup:'Время!', pause:'Пауза', resume:'Дальше',
+    rest:'Отдых', warmlbl:'Разминка · кардио', timeup:'Время!', pause:'Пауза', resume:'Дальше',
     pr:'Рекорд!', nofood:'Ничего не найдено — проверьте написание.',
     steps:'шагов',
     plan:'План тренировок', plan7:'7-дневный сплит', planeod:'Через день',
@@ -766,7 +768,8 @@ function renderDay(){
   var html = dateHead();
   html += '<div class="ex warm'+(log.w?' on':'')+'"><div class="warm">'+media({ph:'treadmill'})
     + '<div class="meta"><h3>'+t('warmup')+'</h3><div class="rx">'+t('warmdesc')+'</div></div>'
-    + '<button class="go" data-warm>'+(log.w ? t('donemark') : t('start15'))+'</button></div></div>';
+    + '<button class="go" data-warm>'+(log.w ? t('donemark') : t('start15'))+'</button></div>'
+    + '<div class="alt" style="margin-top:8px">'+t('warmtip')+'</div></div>';
   p.ex.forEach(function(e,i){
     var arr = log[i] || [];
     var key = exKey(e);
@@ -1292,7 +1295,7 @@ $view.addEventListener('click', function(ev){
   if(el.hasAttribute('data-warm')){
     var log = LOG[ds] = LOG[ds] || {};
     if(log.w){ log.w = false; sset('gym.log', LOG); renderDay(); }
-    else { log.w = true; sset('gym.log', LOG); startTimer(15*60, t('warmlbl')); renderDay(); }
+    else { log.w = true; sset('gym.log', LOG); startTimer(10*60, t('warmlbl')); renderDay(); }
     return;
   }
   if(el.classList.contains('set')){
