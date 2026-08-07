@@ -79,6 +79,10 @@
     display:inline-flex;align-items:center;justify-content:center;transition:transform .08s}
   .set:active{transform:scale(.9)}
   .set[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
+  .set.wu{width:34px;height:34px;font-size:11px;border-style:dashed;color:var(--yellow);border-color:var(--yellow)}
+  .set.wu[aria-pressed="true"]{background:var(--yellow);border-color:var(--yellow);color:#fff;border-style:solid}
+  .wutag{display:inline-block;font-size:11px;font-weight:700;color:var(--yellow);
+    border:1px dashed var(--yellow);border-radius:6px;padding:1px 5px;margin-left:4px;white-space:nowrap}
   .wr{display:flex;gap:6px;margin-left:auto;align-items:center}
   .wt{width:58px;border:1px solid var(--line);background:var(--pill);color:var(--ink);
     border-radius:8px;padding:8px 6px;font-size:14px;text-align:center;font-variant-numeric:tabular-nums}
@@ -372,7 +376,11 @@ var T = {
     poses:'poses', min:'min', left:'Left side', right:'Right side', next:'Next', finish:'Finish',
     sessiondone:'Session complete', donetoday:'Done today ✓', resume2:'Resume', pause2:'Pause',
     ysci:'<b>When to stretch:</b> dynamic stretching <b>before</b> lifting, static stretching <b>after</b>. Holding long static stretches before training temporarily reduces strength and power — save the long holds for the end, when muscles are warm and the flexibility gains are best.',
-    holdtip:'Hold each stretch to a mild pull, never to pain. Breathe slowly — do not bounce.' },
+    holdtip:'Hold each stretch to a mild pull, never to pain. Breathe slowly — do not bounce.',
+    dynwarm:'Dynamic warm-up', dynwarmdesc:'6 min of moving stretches — guided, before your first set',
+    cooldown:'Cool-down stretch', cooldowndesc:'10 min of static holds — guided, after the last set',
+    warmset:'Warm-up set', warmsets:'warm-up sets', warmset1:'warm-up set',
+    warmsettip:'W = warm-up set with a lighter weight. They prepare the movement and do not count toward your working sets.' },
   ru:{ today:'Сегодня', program:'Программа', diary:'Дневник', stats:'Статистика', diet:'Питание',
     warmup:'Разминка', warmdesc:'5–10 мин любого кардио: велотренажёр, гребля, эллипс, лестница или скакалка', start15:'Старт 10:00', donemark:'Готово ✓',
     warmtip:'Затем 2–3 лёгких разминочных подхода первого упражнения (пустой гриф → 50% → 70% рабочего веса)',
@@ -402,7 +410,11 @@ var T = {
     poses:'поз', min:'мин', left:'Левая сторона', right:'Правая сторона', next:'Далее', finish:'Готово',
     sessiondone:'Комплекс завершён', donetoday:'Сделано сегодня ✓', resume2:'Продолжить', pause2:'Пауза',
     ysci:'<b>Когда тянуться:</b> динамическая растяжка <b>до</b> тренировки, статическая — <b>после</b>. Долгие статические удержания перед тренировкой временно снижают силу и мощность — оставьте их на конец, когда мышцы тёплые и гибкость растёт лучше всего.',
-    holdtip:'Тяните до лёгкого натяжения, не до боли. Дышите спокойно, без рывков и пружинистых движений.' }
+    holdtip:'Тяните до лёгкого натяжения, не до боли. Дышите спокойно, без рывков и пружинистых движений.',
+    dynwarm:'Динамическая разминка', dynwarmdesc:'6 мин растяжки в движении — с подсказками, перед первым подходом',
+    cooldown:'Заминка и растяжка', cooldowndesc:'10 мин статики — с подсказками, после последнего подхода',
+    warmset:'Разминочный подход', warmsets:'разминочных', warmset1:'разминочный',
+    warmsettip:'W — разминочный подход с лёгким весом. Он готовит движение и не входит в рабочие подходы.' }
 };
 function t(k){ return (T[LANG] && T[LANG][k]) || T.en[k] || k; }
 function lg(x){ return (x && typeof x === 'object') ? (x[LANG] || x.en) : x; }
@@ -479,6 +491,11 @@ function media(e){
     return '<button class="photo" data-ph="'+ph+'" aria-label="Exercise info"><img src="'+EXIMGS[ph][0]+'" alt=""></button>';
   return pic();
 }
+function ymedia(ph){
+  if(YIMGS[ph])
+    return '<span class="photo" aria-hidden="true"><img src="'+YIMGS[ph][0]+'" alt=""></span>';
+  return pic();
+}
 
 /* ================= exercise catalog ================= */
 var CATALOG = [
@@ -536,107 +553,90 @@ function catByPh(ph){ for(var i=0;i<CATALOG.length;i++) if(CATALOG[i].ph===ph) r
 /* ================= default program (0=Sun..6=Sat) ================= */
 function DEFPROG(){ return [
   { name:{en:'Full Body',ru:'Всё тело'}, focus:{en:'Optional / rest day',ru:'По желанию / день отдыха'}, color:'var(--grey)', ex:[
-    {n:{en:'Barbell squat',ru:'Приседания со штангой'}, s:4, r:'8–12', ph:'squat', alt:{en:'Alternative: hack squat or leg press',ru:'Замена: гакк-присед или жим ногами'}},
-    {n:{en:'Barbell bench press',ru:'Жим штанги лёжа'}, s:4, r:'8–12', ph:'bench'},
-    {n:{en:'Pull-ups',ru:'Подтягивания'}, s:4, r:'8–10', ph:'pullup', alt:{en:'If unable: wide-grip lat pulldown 4×10–12',ru:'Если тяжело: тяга верхнего блока 4×10–12'}},
-    {n:{en:'Seated cable row',ru:'Тяга нижнего блока сидя'}, s:4, r:'10–12', ph:'seatedrow'},
-    {n:{en:'Dumbbell lateral raise',ru:'Махи гантелями в стороны'}, s:4, r:'12–15', ph:'dblat'},
-    {n:{en:'Standing calf raise',ru:'Подъёмы на носки стоя'}, s:4, r:'15–20', ph:'calf'}
+    {n:{en:'Barbell squat',ru:'Приседания со штангой'}, s:3, r:'8–12', ph:'squat', w:2, alt:{en:'Alternative: hack squat or leg press',ru:'Замена: гакк-присед или жим ногами'}},
+    {n:{en:'Barbell bench press',ru:'Жим штанги лёжа'}, s:3, r:'8–12', ph:'bench', w:2},
+    {n:{en:'Pull-ups',ru:'Подтягивания'}, s:3, r:'8–10', ph:'pullup', alt:{en:'If unable: lat pulldown 3×10–12',ru:'Если тяжело: тяга верхнего блока 3×10–12'}},
+    {n:{en:'Dumbbell lateral raise',ru:'Махи гантелями в стороны'}, s:3, r:'12–15', ph:'dblat'},
+    {n:{en:'Standing calf raise',ru:'Подъёмы на носки стоя'}, s:3, r:'15–20', ph:'calf'}
   ]},
   { name:{en:'Upper',ru:'Верх тела'}, focus:{en:'Chest / Back / Shoulders',ru:'Грудь / Спина / Плечи'}, color:'var(--red)', ex:[
-    {n:{en:'Barbell bench press',ru:'Жим штанги лёжа'}, s:4, r:'8–12', ph:'bench'},
-    {n:{en:'Incline dumbbell press',ru:'Жим гантелей на наклонной'}, s:4, r:'10–12', ph:'inclinedb', alt:{en:'Deep stretch at the bottom — key for chest growth',ru:'Глубокое растяжение внизу — главное для роста груди'}},
-    {n:{en:'Pull-ups',ru:'Подтягивания'}, s:4, r:'8–10', ph:'pullup', alt:{en:'If unable: wide-grip lat pulldown 4×10–12',ru:'Если тяжело: тяга верхнего блока 4×10–12'}},
-    {n:{en:'Seated cable row',ru:'Тяга нижнего блока сидя'}, s:4, r:'10–12', ph:'seatedrow'},
-    {n:{en:'Dumbbell lateral raise',ru:'Махи гантелями в стороны'}, s:4, r:'12–15', ph:'dblat'},
-    {n:{en:'Lever pec-deck fly',ru:'Сведения в «бабочке»'}, s:4, r:'12–15', ph:'pecdeck'},
-    {n:{en:'Face pull',ru:'Тяга к лицу (face pull)'}, s:4, r:'15–20', ph:'facepull', alt:{en:'Rear delts + shoulder health',ru:'Задние дельты + здоровье плеч'}},
-    {n:{en:'Hanging leg raise',ru:'Подъём ног в висе'}, s:4, r:'12–15', ph:'core'}
+    {n:{en:'Barbell bench press',ru:'Жим штанги лёжа'}, s:3, r:'8–12', ph:'bench', w:2},
+    {n:{en:'Incline dumbbell press',ru:'Жим гантелей на наклонной'}, s:3, r:'10–12', ph:'inclinedb'},
+    {n:{en:'Pull-ups',ru:'Подтягивания'}, s:3, r:'8–10', ph:'pullup', alt:{en:'If unable: lat pulldown 3×10–12',ru:'Если тяжело: тяга верхнего блока 3×10–12'}},
+    {n:{en:'Seated cable row',ru:'Тяга нижнего блока сидя'}, s:3, r:'10–12', ph:'seatedrow'},
+    {n:{en:'Dumbbell lateral raise',ru:'Махи гантелями в стороны'}, s:3, r:'12–15', ph:'dblat'},
+    {n:{en:'Face pull',ru:'Тяга к лицу (face pull)'}, s:3, r:'15–20', ph:'facepull'}
   ]},
-  { name:{en:'Lower',ru:'Низ тела'}, focus:{en:'Quads / Hams / Glutes / Calves',ru:'Квадрицепс / Бицепс бедра / Ягодицы / Икры'}, color:'var(--green)', ex:[
-    {n:{en:'Barbell squat',ru:'Приседания со штангой'}, s:4, r:'8–12', ph:'squat', alt:{en:'If not comfortable: hack squat',ru:'Если неудобно: гакк-присед'}},
-    {n:{en:'Leg press',ru:'Жим ногами'}, s:4, r:'12–15', ph:'legpress'},
-    {n:{en:'Barbell Romanian deadlift',ru:'Румынская тяга'}, s:4, r:'10–12', ph:'rdl', alt:{en:'Only with confident technique. Alternative: lying leg curl',ru:'Только при уверенной технике. Замена: сгибания ног лёжа'}},
-    {n:{en:'Walking lunges (barbell)',ru:'Выпады со штангой'}, s:4, r:{en:'20 steps',ru:'20 шагов'}, ph:'lunge'},
-    {n:{en:'Lever leg extension',ru:'Разгибания ног'}, s:4, r:'12–15', ph:'legext'},
-    {n:{en:'Standing calf raise',ru:'Подъёмы на носки стоя'}, s:4, r:'15–20', ph:'calf'}
+  { name:{en:'Lower',ru:'Низ тела'}, focus:{en:'Quads / Hamstrings / Calves',ru:'Квадрицепс / Бицепс бедра / Икры'}, color:'var(--green)', ex:[
+    {n:{en:'Barbell squat',ru:'Приседания со штангой'}, s:3, r:'8–12', ph:'squat', w:2, alt:{en:'If not comfortable: hack squat',ru:'Если неудобно: гакк-присед'}},
+    {n:{en:'Leg press',ru:'Жим ногами'}, s:3, r:'12–15', ph:'legpress'},
+    {n:{en:'Barbell Romanian deadlift',ru:'Румынская тяга'}, s:3, r:'10–12', ph:'rdl', w:1, alt:{en:'Only with confident technique. Alternative: lying leg curl',ru:'Только при уверенной технике. Замена: сгибания ног лёжа'}},
+    {n:{en:'Lever leg extension',ru:'Разгибания ног'}, s:3, r:'12–15', ph:'legext'},
+    {n:{en:'Standing calf raise',ru:'Подъёмы на носки стоя'}, s:3, r:'15–20', ph:'calf'}
   ]},
   { name:{en:'Pull',ru:'Тяги'}, focus:{en:'Back / Biceps / Rear Delts',ru:'Спина / Бицепс / Задние дельты'}, color:'var(--blue)', ex:[
-    {n:{en:'Deadlift (conventional)',ru:'Становая тяга'}, s:4, r:'6–8', rx:{en:'4 sets × 6–8 — optional, only with correct form',ru:'4 подхода × 6–8 — по желанию, только с правильной техникой'}, ph:'deadlift', alt:{en:'Alternative: bent-over row with lighter weight',ru:'Замена: тяга штанги в наклоне с меньшим весом'}},
-    {n:{en:'Bent-over barbell row',ru:'Тяга штанги в наклоне'}, s:4, r:'8–12', ph:'bbrow'},
-    {n:{en:'Wide-grip lat pulldown',ru:'Тяга верхнего блока'}, s:4, r:'10–12', ph:'latpull', alt:{en:'Or pull-ups if you can do 8+',ru:'Или подтягивания, если делаете 8+'}},
-    {n:{en:'Reverse pec-deck fly (rear delts)',ru:'Обратные разведения (задние дельты)'}, s:4, r:'15–20', ph:'revpecdeck'},
-    {n:{en:'Incline dumbbell curl',ru:'Подъём гантелей на наклонной'}, s:4, r:'10–12', ph:'inclinecurl', alt:{en:'Stretched position — most effective for biceps',ru:'Растянутая позиция — самое эффективное для бицепса'}},
-    {n:{en:'Preacher curl',ru:'Сгибания на скамье Скотта'}, s:4, r:'10–12', ph:'preacher'},
-    {n:{en:'Dumbbell hammer curl',ru:'«Молотки» с гантелями'}, s:4, r:'10–12', ph:'hammer'}
+    {n:{en:'Bent-over barbell row',ru:'Тяга штанги в наклоне'}, s:3, r:'8–12', ph:'bbrow', w:2},
+    {n:{en:'Wide-grip lat pulldown',ru:'Тяга верхнего блока'}, s:3, r:'10–12', ph:'latpull', alt:{en:'Or pull-ups if you can do 8+',ru:'Или подтягивания, если делаете 8+'}},
+    {n:{en:'Reverse pec-deck fly (rear delts)',ru:'Обратные разведения (задние дельты)'}, s:3, r:'15–20', ph:'revpecdeck'},
+    {n:{en:'Incline dumbbell curl',ru:'Подъём гантелей на наклонной'}, s:3, r:'10–12', ph:'inclinecurl'},
+    {n:{en:'Dumbbell hammer curl',ru:'«Молотки» с гантелями'}, s:3, r:'10–12', ph:'hammer'}
   ]},
   { name:{en:'Push',ru:'Жимы'}, focus:{en:'Chest / Shoulders / Triceps',ru:'Грудь / Плечи / Трицепс'}, color:'var(--red)', ex:[
-    {n:{en:'Standing overhead press',ru:'Жим штанги стоя (армейский)'}, s:4, r:'8–12', ph:'ohp', alt:{en:'The best overall shoulder builder',ru:'Лучшее базовое упражнение для плеч'}},
-    {n:{en:'Dumbbell bench press',ru:'Жим гантелей лёжа'}, s:4, r:'8–12', ph:'dbbench', alt:{en:'Deeper stretch than barbell',ru:'Глубже растяжение, чем со штангой'}},
-    {n:{en:'Weighted triceps dips',ru:'Отжимания на брусьях с весом'}, s:4, r:'8–12', ph:'dips', alt:{en:'If unable: assisted dips 4×15',ru:'Если тяжело: брусья в гравитроне 4×15'}},
-    {n:{en:'Lever pec-deck fly',ru:'Сведения в «бабочке»'}, s:4, r:'12–15', ph:'pecdeck'},
-    {n:{en:'Cable lateral raise',ru:'Махи в кроссовере'}, s:4, r:'12–15', ph:'cablelat'},
-    {n:{en:'Cable overhead triceps extension (rope)',ru:'Французский жим с канатом'}, s:4, r:'12–15', ph:'rope', alt:{en:'Overhead = stretched triceps, better than pushdowns',ru:'Над головой = растянутый трицепс, эффективнее жима вниз'}},
-    {n:{en:'Triceps rope pushdown',ru:'Разгибания на блоке с канатом'}, s:4, r:'12–15', ph:'pushdown'},
-    {n:{en:'Skull crushers (barbell)',ru:'Французский жим лёжа'}, s:4, r:'10–12', ph:'skull'}
+    {n:{en:'Standing overhead press',ru:'Жим штанги стоя (армейский)'}, s:3, r:'8–12', ph:'ohp', w:2},
+    {n:{en:'Dumbbell bench press',ru:'Жим гантелей лёжа'}, s:3, r:'8–12', ph:'dbbench'},
+    {n:{en:'Weighted triceps dips',ru:'Отжимания на брусьях с весом'}, s:3, r:'8–12', ph:'dips', alt:{en:'If unable: assisted dips 3×12',ru:'Если тяжело: брусья в гравитроне 3×12'}},
+    {n:{en:'Cable lateral raise',ru:'Махи в кроссовере'}, s:3, r:'12–15', ph:'cablelat'},
+    {n:{en:'Cable overhead triceps extension (rope)',ru:'Французский жим с канатом'}, s:3, r:'12–15', ph:'rope'}
   ]},
   { name:{en:'Lower',ru:'Ноги'}, focus:{en:'Glutes / Hamstrings',ru:'Ягодицы / Бицепс бедра'}, color:'var(--green)', ex:[
-    {n:{en:'Barbell hip thrust',ru:'Ягодичный мост со штангой'}, s:4, r:'10–12', ph:'hipthrust', alt:{en:'The most effective glute exercise',ru:'Самое эффективное упражнение для ягодиц'}},
-    {n:{en:'Barbell Romanian deadlift',ru:'Румынская тяга'}, s:4, r:'10–12', ph:'rdl', alt:{en:'Only with safe form. Alternative: lying leg curl',ru:'Только с безопасной техникой. Замена: сгибания ног лёжа'}},
-    {n:{en:'Bulgarian split squat',ru:'Болгарские выпады'}, s:4, r:{en:'10–12 each leg',ru:'10–12 на ногу'}, ph:'bulgsplit'},
-    {n:{en:'Lying leg curl',ru:'Сгибания ног лёжа'}, s:4, r:'12–15', ph:'lyinglegcurl'},
-    {n:{en:'Standing calf raise',ru:'Подъёмы на носки стоя'}, s:4, r:'15–20', ph:'calf'},
-    {n:{en:'Cable crunch',ru:'Скручивания у блока'}, s:4, r:'15–20', ph:'cablecrunch'}
+    {n:{en:'Barbell hip thrust',ru:'Ягодичный мост со штангой'}, s:3, r:'10–12', ph:'hipthrust', w:1},
+    {n:{en:'Bulgarian split squat',ru:'Болгарские выпады'}, s:3, r:{en:'10–12 each leg',ru:'10–12 на ногу'}, ph:'bulgsplit'},
+    {n:{en:'Lying leg curl',ru:'Сгибания ног лёжа'}, s:3, r:'12–15', ph:'lyinglegcurl'},
+    {n:{en:'Standing calf raise',ru:'Подъёмы на носки стоя'}, s:3, r:'15–20', ph:'calf'},
+    {n:{en:'Cable crunch',ru:'Скручивания у блока'}, s:3, r:'15–20', ph:'cablecrunch'}
   ]},
-  { name:{en:'Arms',ru:'Руки'}, focus:{en:'Biceps / Triceps / Forearms / Abs',ru:'Бицепс / Трицепс / Предплечья / Пресс'}, color:'var(--yellow)', ex:[
-    {n:{en:'Close-grip bench press',ru:'Жим штанги узким хватом'}, s:4, r:'8–12', ph:'cgbench', alt:{en:'The heaviest triceps builder',ru:'Самое тяжёлое базовое на трицепс'}},
-    {n:{en:'Barbell curl',ru:'Подъём штанги на бицепс'}, s:4, r:'8–12', ph:'bbcurl'},
-    {n:{en:'Cable overhead triceps extension (rope)',ru:'Французский жим с канатом'}, s:4, r:'12–15', ph:'rope'},
-    {n:{en:'Incline dumbbell curl',ru:'Подъём гантелей на наклонной'}, s:4, r:'10–12', ph:'inclinecurl', alt:{en:'Stretched position — most effective for biceps',ru:'Растянутая позиция — самое эффективное для бицепса'}},
-    {n:{en:'Triceps rope pushdown',ru:'Разгибания на блоке с канатом'}, s:4, r:'12–15', ph:'pushdown'},
-    {n:{en:'Dumbbell hammer curl',ru:'«Молотки» с гантелями'}, s:4, r:'10–12', ph:'hammer'},
-    {n:{en:'One-arm dumbbell wrist curl (over bench)',ru:'Сгибания запястий с гантелью'}, s:4, r:'15–20', ph:'wrist'},
-    {n:{en:'Weighted lying neck flexion',ru:'Сгибания шеи лёжа с весом'}, s:4, r:'—', rx:{en:'4 sets — careful, start with 2.5 kg',ru:'4 подхода — осторожно, начните с 2,5 кг'}, ph:'neck'},
-    {n:{en:'Hanging leg raise',ru:'Подъём ног в висе'}, s:4, r:'12–15', ph:'core'}
+  { name:{en:'Arms',ru:'Руки'}, focus:{en:'Biceps / Triceps',ru:'Бицепс / Трицепс'}, color:'var(--yellow)', ex:[
+    {n:{en:'Close-grip bench press',ru:'Жим штанги узким хватом'}, s:3, r:'8–12', ph:'cgbench', w:2},
+    {n:{en:'Barbell curl',ru:'Подъём штанги на бицепс'}, s:3, r:'8–12', ph:'bbcurl'},
+    {n:{en:'Triceps rope pushdown',ru:'Разгибания на блоке с канатом'}, s:3, r:'12–15', ph:'pushdown'},
+    {n:{en:'Incline dumbbell curl',ru:'Подъём гантелей на наклонной'}, s:3, r:'10–12', ph:'inclinecurl'},
+    {n:{en:'Dumbbell hammer curl',ru:'«Молотки» с гантелями'}, s:3, r:'10–12', ph:'hammer'}
   ]}
 ]; }
 var PROGV = sget('gym.progv', 1);
-if(PROGV < 2){ PROGS = null; sset('gym.prog2', null); sset('gym.progv', 2); }
+if(PROGV < 3){ PROGS = null; sset('gym.prog2', null); sset('gym.eod2', null); sset('gym.progv', 3); }
 var PROG = PROGS || DEFPROG();
 function saveProg(){ PROGS = PROG; sset('gym.prog2', PROG); }
 
 /* ---- every-other-day plan (3 rotating full-body workouts) ---- */
 function DEFEOD(){ return [
   { name:{en:'Workout A',ru:'Тренировка A'}, focus:{en:'Full body · squat & press',ru:'Всё тело · присед и жим'}, color:'var(--red)', ex:[
-    {n:{en:'Barbell squat',ru:'Приседания со штангой'}, s:4, r:'8–12', ph:'squat', alt:{en:'Alternative: hack squat or leg press',ru:'Замена: гакк-присед или жим ногами'}},
-    {n:{en:'Barbell bench press',ru:'Жим штанги лёжа'}, s:4, r:'8–12', ph:'bench'},
-    {n:{en:'Seated cable row',ru:'Тяга нижнего блока сидя'}, s:4, r:'10–12', ph:'seatedrow'},
+    {n:{en:'Barbell squat',ru:'Приседания со штангой'}, s:3, r:'8–12', ph:'squat', w:2, alt:{en:'Alternative: hack squat or leg press',ru:'Замена: гакк-присед или жим ногами'}},
+    {n:{en:'Barbell bench press',ru:'Жим штанги лёжа'}, s:3, r:'8–12', ph:'bench', w:2},
+    {n:{en:'Seated cable row',ru:'Тяга нижнего блока сидя'}, s:3, r:'10–12', ph:'seatedrow'},
     {n:{en:'Dumbbell lateral raise',ru:'Махи гантелями в стороны'}, s:3, r:'12–15', ph:'dblat'},
-    {n:{en:'Lever leg extension',ru:'Разгибания ног'}, s:3, r:'12–15', ph:'legext'},
-    {n:{en:'Triceps rope pushdown',ru:'Разгибания на блоке с канатом'}, s:3, r:'12–15', ph:'pushdown'},
-    {n:{en:'Hanging leg raise',ru:'Подъём ног в висе'}, s:3, r:'12–15', ph:'core'}
+    {n:{en:'Lying leg curl',ru:'Сгибания ног лёжа'}, s:3, r:'12–15', ph:'lyinglegcurl'},
+    {n:{en:'Triceps rope pushdown',ru:'Разгибания на блоке с канатом'}, s:3, r:'12–15', ph:'pushdown'}
   ]},
   { name:{en:'Workout B',ru:'Тренировка B'}, focus:{en:'Full body · hinge & pull',ru:'Всё тело · тяги'}, color:'var(--blue)', ex:[
-    {n:{en:'Barbell Romanian deadlift',ru:'Румынская тяга'}, s:4, r:'10–12', ph:'rdl', alt:{en:'Only with safe form. Alternative: lying leg curl',ru:'Только с безопасной техникой. Замена: сгибания ног лёжа'}},
-    {n:{en:'Wide-grip lat pulldown',ru:'Тяга верхнего блока'}, s:4, r:'10–12', ph:'latpull', alt:{en:'Or pull-ups if you can do 8+',ru:'Или подтягивания, если делаете 8+'}},
-    {n:{en:'Incline dumbbell press',ru:'Жим гантелей на наклонной'}, s:4, r:'10–12', ph:'inclinedb'},
-    {n:{en:'Bent-over barbell row',ru:'Тяга штанги в наклоне'}, s:4, r:'8–12', ph:'bbrow'},
+    {n:{en:'Barbell Romanian deadlift',ru:'Румынская тяга'}, s:3, r:'10–12', ph:'rdl', w:1, alt:{en:'Only with safe form. Alternative: lying leg curl',ru:'Только с безопасной техникой. Замена: сгибания ног лёжа'}},
+    {n:{en:'Wide-grip lat pulldown',ru:'Тяга верхнего блока'}, s:3, r:'10–12', ph:'latpull', alt:{en:'Or pull-ups if you can do 8+',ru:'Или подтягивания, если делаете 8+'}},
+    {n:{en:'Incline dumbbell press',ru:'Жим гантелей на наклонной'}, s:3, r:'10–12', ph:'inclinedb'},
+    {n:{en:'Leg press',ru:'Жим ногами'}, s:3, r:'12–15', ph:'legpress'},
     {n:{en:'Incline dumbbell curl',ru:'Подъём гантелей на наклонной'}, s:3, r:'10–12', ph:'inclinecurl'},
-    {n:{en:'Dumbbell hammer curl',ru:'«Молотки» с гантелями'}, s:3, r:'10–12', ph:'hammer'},
     {n:{en:'Cable crunch',ru:'Скручивания у блока'}, s:3, r:'15–20', ph:'cablecrunch'}
   ]},
   { name:{en:'Workout C',ru:'Тренировка C'}, focus:{en:'Full body · glutes & shoulders',ru:'Всё тело · ягодицы и плечи'}, color:'var(--green)', ex:[
-    {n:{en:'Barbell hip thrust',ru:'Ягодичный мост со штангой'}, s:4, r:'10–12', ph:'hipthrust'},
-    {n:{en:'Standing overhead press',ru:'Жим штанги стоя (армейский)'}, s:4, r:'8–12', ph:'ohp'},
-    {n:{en:'Leg press',ru:'Жим ногами'}, s:4, r:'12–15', ph:'legpress'},
+    {n:{en:'Barbell hip thrust',ru:'Ягодичный мост со штангой'}, s:3, r:'10–12', ph:'hipthrust', w:1},
+    {n:{en:'Standing overhead press',ru:'Жим штанги стоя (армейский)'}, s:3, r:'8–12', ph:'ohp', w:2},
+    {n:{en:'Bulgarian split squat',ru:'Болгарские выпады'}, s:3, r:{en:'10–12 each leg',ru:'10–12 на ногу'}, ph:'bulgsplit'},
+    {n:{en:'Bent-over barbell row',ru:'Тяга штанги в наклоне'}, s:3, r:'8–12', ph:'bbrow'},
     {n:{en:'Face pull',ru:'Тяга к лицу (face pull)'}, s:3, r:'15–20', ph:'facepull'},
-    {n:{en:'Lying leg curl',ru:'Сгибания ног лёжа'}, s:3, r:'12–15', ph:'lyinglegcurl'},
-    {n:{en:'Skull crushers (barbell)',ru:'Французский жим лёжа'}, s:3, r:'10–12', ph:'skull'},
     {n:{en:'Standing calf raise',ru:'Подъёмы на носки стоя'}, s:3, r:'15–20', ph:'calf'}
   ]}
 ]; }
 var PLAN = sget('gym.plan', 'week');
-var EODS = sget('gym.eod2', null);
+var EODS = sget('gym.eod2', null) || null;
 var EODA = sget('gym.eodanchor', null);
 var EODP = EODS || DEFEOD();
 function saveEod(){ EODS = EODP; sset('gym.eod2', EODP); }
@@ -967,13 +967,22 @@ function renderDay(){
     + '<div class="meta"><h3>'+t('warmup')+'</h3><div class="rx">'+t('warmdesc')+'</div>'
     + '<div class="alt">'+t('warmtip')+'</div></div>'
     + '<button class="go" data-warm>'+(log.w ? t('donemark') : t('start15'))+'</button></div></div>';
+  var ydone = (YLOG[ds]||[]);
+  html += '<div class="ex warm"><div class="warm">'+ymedia('y_wgs')
+    + '<div class="meta"><h3>'+t('dynwarm')+'</h3><div class="rx">'+t('dynwarmdesc')+'</div></div>'
+    + '<button class="go'+(ydone.indexOf('dynamic')>=0?' on':'')+'" data-yrun="dynamic">'
+    + (ydone.indexOf('dynamic')>=0 ? t('donemark') : t('start'))+'</button></div></div>';
   p.ex.forEach(function(e,i){
     var arr = log[i] || [];
     var key = exKey(e);
     var allDone = e.s>0, pills = '';
+    var wn = e.w || 0, warr = log['w'+i] || [];
+    for(var k1=0;k1<wn;k1++){
+      var won = isDone(warr[k1]);
+      pills += '<button class="set wu" data-wex="'+i+'" data-wset="'+k1+'" aria-pressed="'+won+'" aria-label="'+t('warmset')+' '+(k1+1)+'">'+(won ? '✓' : 'W')+'</button>';
+    }
     for(var k2=0;k2<e.s;k2++){
       var on = isDone(arr[k2]); if(!on) allDone = false;
-      var lbl = on ? ((setW(arr[k2])||'')+'') : (k2+1);
       pills += '<button class="set" data-ex="'+i+'" data-set="'+k2+'" aria-pressed="'+on+'" aria-label="Set '+(k2+1)+'">'+(on ? '✓' : (k2+1))+'</button>';
     }
     var rxTxt = e.rx ? lg(e.rx) : (e.s+' '+t('sets')+' × '+lg(e.r)+' '+t('reps'));
@@ -982,7 +991,7 @@ function renderDay(){
     arr.forEach(function(v){ var wv = setW(v); if(wv && prev && wv > prev) isPR = true; });
     html += '<div class="ex'+(allDone?' done':'')+'"><div class="top">'+media(e)
       + '<div class="meta"><h3>'+esc(lg(e.n))+(isPR?'<span class="prbadge">'+t('pr')+'</span>':'')+'</h3>'
-      + '<div class="rx">'+esc(rxTxt)+'</div>'
+      + '<div class="rx">'+esc(rxTxt)+(e.w ? ' <span class="wutag">+'+e.w+' '+(e.w===1 ? t('warmset1') : t('warmsets'))+'</span>' : '')+'</div>'
       + (e.alt ? '<div class="alt">'+esc(lg(e.alt))+'</div>' : '')
       + '</div></div>'
       + '<div class="setrow">'+pills
@@ -990,7 +999,11 @@ function renderDay(){
       + '<input class="wt rp" data-r="'+esc(key)+'" inputmode="numeric" placeholder="'+t('reps')+'" value="'+esc(rr)+'" aria-label="'+t('reps')+'"></span>'
       + '</div></div>';
   });
-  html += '<div class="resthint">'+t('resthint')+'</div>';
+  html += '<div class="ex warm"><div class="warm">'+ymedia('y_child')
+    + '<div class="meta"><h3>'+t('cooldown')+'</h3><div class="rx">'+t('cooldowndesc')+'</div></div>'
+    + '<button class="go'+(ydone.indexOf('cooldown')>=0?' on':'')+'" data-yrun="cooldown">'
+    + (ydone.indexOf('cooldown')>=0 ? t('donemark') : t('start'))+'</button></div></div>';
+  html += '<div class="resthint">'+t('warmsettip')+'<br><br>'+t('resthint')+'</div>';
   $view.innerHTML = html;
 }
 
@@ -1440,7 +1453,7 @@ function plClose(){
   PL.run = false;
   if(PL.id){ clearInterval(PL.id); PL.id = null; }
   $pl.classList.remove('open');
-  if(view==='yoga') renderYoga();
+  render();
 }
 document.getElementById('pclose').addEventListener('click', plClose);
 
@@ -1626,10 +1639,11 @@ document.querySelectorAll('.lang button').forEach(function(b){
 });
 
 $view.addEventListener('click', function(ev){
-  var el = ev.target.closest('[data-nav],[data-warm],.set,.pday,[data-cal],.cell,.photo,[data-edback],[data-edup],[data-eddn],[data-eddel],[data-edadd],[data-edreset],[data-edopen],[data-bwadd],[data-bwdel],[data-profopen],[data-profsave],[data-fadd],[data-fdel],[data-plan],[data-trainanyway],[data-yoga],[data-yback],[data-ystart],[data-yph]');
+  var el = ev.target.closest('[data-nav],[data-warm],.set,.pday,[data-cal],.cell,.photo,[data-edback],[data-edup],[data-eddn],[data-eddel],[data-edadd],[data-edreset],[data-edopen],[data-bwadd],[data-bwdel],[data-profopen],[data-profsave],[data-fadd],[data-fdel],[data-plan],[data-trainanyway],[data-yoga],[data-yback],[data-ystart],[data-yph],[data-yrun]');
   if(!el) return;
   var ds = fmt(selDate);
-  if(el.classList.contains('photo')){ openLB(el.dataset.ph); return; }
+  if(el.tagName==='BUTTON' && el.classList.contains('photo')){ openLB(el.dataset.ph); return; }
+  if(el.hasAttribute('data-yrun')){ plOpen(el.getAttribute('data-yrun')); return; }
   if(el.hasAttribute('data-yoga')){ yogaOpen = el.getAttribute('data-yoga'); renderRoutine(); window.scrollTo(0,0); return; }
   if(el.hasAttribute('data-yback')){ yogaOpen = null; renderYoga(); window.scrollTo(0,0); return; }
   if(el.hasAttribute('data-ystart')){ plOpen(el.getAttribute('data-ystart')); return; }
@@ -1656,6 +1670,15 @@ $view.addEventListener('click', function(ev){
     if(log.w){ log.w = false; sset('gym.log', LOG); renderDay(); }
     else { log.w = true; sset('gym.log', LOG); startTimer(10*60, t('warmlbl')); renderDay(); }
     return;
+  }
+  if(el.classList.contains('wu')){
+    var wi = +el.dataset.wex, wk = +el.dataset.wset;
+    var wlog = LOG[ds] = LOG[ds] || {};
+    var warr = wlog['w'+wi] = wlog['w'+wi] || [];
+    if(isDone(warr[wk])) warr[wk] = null;
+    else { warr[wk] = true; startTimer(45, t('rest')); }
+    sset('gym.log', LOG);
+    renderDay(); return;
   }
   if(el.classList.contains('set')){
     var i = +el.dataset.ex, k2 = +el.dataset.set;
